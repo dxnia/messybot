@@ -15,12 +15,7 @@ app.use(bodyParser.json())
 
 // Index route
 app.get('/', function (req, res) {
-	if (req.query['hub.verify_token'] === 'test_token') {
-		res.send(req.query['hub.challenge'])
-	}
-	else { 
-		res.send('Hello worlddd')
-	} 
+	res.send('Hello world, I am a chat bot')
 })
 
 // for Facebook verification
@@ -35,3 +30,37 @@ app.get('/webhook/', function (req, res) {
 app.listen(app.get('port'), function() {
 	console.log('running on port', app.get('port'))
 })
+
+app.post('/webhook/', function (req, res) {
+    let messaging_events = req.body.entry[0].messaging
+    for (let i = 0; i < messaging_events.length; i++) {
+	    let event = req.body.entry[0].messaging[i]
+	    let sender = event.sender.id
+	    if (event.message && event.message.text) {
+		    let text = event.message.text
+		    sendTextMessage(sender, "Text received, echo: " + text.substring(0, 200))
+	    }
+    }
+    res.sendStatus(200)
+})
+
+const token = "EAAIbtxjmfKQBADKTwpOkWCYclvHr1AhD2waRyCqrzT9bxne2IRl9ZAZCRfJi9QxS77Xa8Wqr7QABfHBE59m1G3xf4EeYgAHCgNs2tKIo1uJ2BCD1zpdp9ZA6BpnqxHbqwEXpTz1vJr0lImKx1GbdpxsHFprDnzVZB0iVfiHJEQZDZD"
+
+function sendTextMessage(sender, text) {
+    let messageData = { text:text }
+    request({
+	    url: 'https://graph.facebook.com/v2.6/me/messages',
+	    qs: {access_token:token},
+	    method: 'POST',
+		json: {
+		    recipient: {id:sender},
+			message: messageData,
+		}
+	}, function(error, response, body) {
+		if (error) {
+		    console.log('Error sending messages: ', error)
+		} else if (response.body.error) {
+		    console.log('Error: ', response.body.error)
+	    }
+    })
+}
